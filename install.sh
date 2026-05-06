@@ -99,6 +99,41 @@ link_dotfiles() {
 }
 
 # -----------------------------------------------------------------------------
+# Link Claude Code assets (CLAUDE.md, settings.json, skills/)
+# -----------------------------------------------------------------------------
+# ~/.claude/ holds session state we must not touch — only link the assets
+# we manage in dotfiles. Existing files are backed up to *.backup once.
+link_claude_assets() {
+    local src_dir="$DOTFILES_DIR/.claude"
+    local dst_dir="$HOME/.claude"
+
+    [[ -d "$src_dir" ]] || { echo "  No .claude in dotfiles, skipping"; return; }
+
+    mkdir -p "$dst_dir"
+    echo "  Linking Claude Code assets..."
+
+    # CLAUDE.md
+    if [[ -f "$dst_dir/CLAUDE.md" && ! -L "$dst_dir/CLAUDE.md" ]]; then
+        mv "$dst_dir/CLAUDE.md" "$dst_dir/CLAUDE.md.backup"
+    fi
+    ln -sf "$src_dir/CLAUDE.md" "$dst_dir/CLAUDE.md"
+
+    # settings.json
+    if [[ -f "$dst_dir/settings.json" && ! -L "$dst_dir/settings.json" ]]; then
+        mv "$dst_dir/settings.json" "$dst_dir/settings.json.backup"
+    fi
+    ln -sf "$src_dir/settings.json" "$dst_dir/settings.json"
+
+    # skills/ — link the parent dir so new skills appear without re-running
+    if [[ -d "$dst_dir/skills" && ! -L "$dst_dir/skills" ]]; then
+        mv "$dst_dir/skills" "$dst_dir/skills.backup"
+    fi
+    ln -sfn "$src_dir/skills" "$dst_dir/skills"
+
+    echo "  Linked CLAUDE.md, settings.json, skills/"
+}
+
+# -----------------------------------------------------------------------------
 # Set zsh as default shell
 # -----------------------------------------------------------------------------
 set_default_shell() {
@@ -134,6 +169,7 @@ main() {
     install_powerlevel10k
     install_plugins
     link_dotfiles
+    link_claude_assets
     set_default_shell
     configure_devcontainer
 
